@@ -1,0 +1,10 @@
+{
+  "manifest_version": 3,
+  "name": "middle finger censor",
+  "description": "censors middle finger in camera",
+  "version": "1.0",
+  "action": {
+    "default_popup": "index.html",
+    "default_icon": "temp.png"
+  }
+}

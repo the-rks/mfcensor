@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]>      <html class="no-js"> <!--<![endif]-->
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Test</title>
+    <meta name="description" content="" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="" />
+  </head>
+  <body>
+    <!--[if lt IE 7]>
+      <p class="browsehappy">
+        You are using an <strong>outdated</strong> browser. Please
+        <a href="#">upgrade your browser</a> to improve your experience.
+      </p>
+    <![endif]-->
+
+    <!-- Create a video element to capture the webcam feed and a canvas to draw the results -->
+    <div>
+      <h1>Middle Finger Censored</h1>
+    </div>
+    <video></video>
+    <canvas width="1280px" height="720px"></canvas>
+
+    <!-- Hide the video and make the canvas the correct size -->
+    <style>
+      video {
+        display: none;
+      }
+
+      canvas {
+        max-width: 100%;
+        margin: 0 auto;
+      }
+    </style>
+
+    <!-- Import MediaPipe dependencies -->
+    <script
+      src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"
+      crossorigin="anonymous"
+    ></script>
+
+    <!-- Run our JavaScript code -->
+    <script>
+      const video = document.querySelector("video");
+      const canvas = document.querySelector("canvas");
+      const ctx = canvas.getContext("2d");
+
+      function isClosed(hand_landmarks, i1, i2) {
+        mf_tip_x = hand_landmarks[i1].x;
+        mf_tip_y = hand_landmarks[i1].y;
+        mf_mcp_y = hand_landmarks[i2].y;
+        mf_mcp_x = hand_landmarks[i2].x;
+        wrist_x = hand_landmarks[0].x;
+        wrist_y = hand_landmarks[0].y;
+
+        d_mt_mm = Math.sqrt(
+          (mf_tip_x - mf_mcp_x) ** 2 + (mf_tip_y - mf_mcp_y) ** 2
+        );
+        d_mm_wr = Math.sqrt(
+          (mf_mcp_x - wrist_x) ** 2 + (mf_mcp_y - wrist_y) ** 2
+        );
+        console.log(mf_tip_x, mf_tip_y);
+        return d_mt_mm / d_mm_wr < 1;
+      }
+
+      // This "onResults" function takes the hand detection results
+      // and uses that information to draw what appears on screen
+      function onResults(results) {
+        // Draw the webcam image on screen
+        ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+
+        // Cover the screen with a semi-transparent black rectangle
+        // (to make the camera image very dark)
+        ctx.fillStyle = "#000c";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // If there are any hands, draw them
+        if (results.multiHandLandmarks) {
+          for (const hand_landmarks of results.multiHandLandmarks) {
+            // Draw the connecting lines
+            //console.log(hand_landmarks);
+            mFingerIsClosed = isClosed(hand_landmarks, 12, 9);
+            rFingerIsClosed = isClosed(hand_landmarks, 16, 13);
+            pFingerIsClosed = isClosed(hand_landmarks, 20, 17);
+            iFingerIsClosed = isClosed(hand_landmarks, 8, 5);
+            console.log(mFingerIsClosed);
+            isFlip =
+              !mFingerIsClosed &&
+              iFingerIsClosed &&
+              rFingerIsClosed &&
+              pFingerIsClosed;
+
+            if (isFlip) {
+              ctx.fillStyle = "#FFFF";
+              ctx.fillRect(
+                (hand_landmarks[12].x * canvas.width) | 0,
+                (hand_landmarks[12].y * canvas.height) | 0,
+                50,
+                50
+              );
+            }
+
+            drawConnectors(ctx, hand_landmarks, HAND_CONNECTIONS, {
+              color: "white",
+              lineWidth: 12,
+            });
+
+            // Draw circles at the joints
+            drawLandmarks(ctx, hand_landmarks, {
+              color: "white",
+              lineWidth: 8,
+            });
+          }
+        }
+      }
+
+      // Set up MediaPipe hands detection
+      const hands = new Hands({
+        locateFile: (file) =>
+          `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`,
+      });
+      hands.setOptions({
+        maxNumHands: 4,
+        modelComplexity: 1,
+        minDetectionConfidence: 0.5,
+        minTrackingConfidence: 0.5,
+      });
+      hands.onResults(onResults);
+
+      // Start the camera
+      const camera = new Camera(video, {
+        onFrame: () => hands.send({ image: video }),
+        width: 1280,
+        height: 720,
+      });
+
+      camera.start();
+    </script>
+    <script src="" async defer></script>
+  </body>
+</html>
