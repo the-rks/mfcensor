@@ -66,19 +66,24 @@
       function isClosed(hand_landmarks, i1, i2) {
         mf_tip_x = hand_landmarks[i1].x;
         mf_tip_y = hand_landmarks[i1].y;
+        mf_tip_z = hand_landmarks[i1].z;
+
         mf_mcp_y = hand_landmarks[i2].y;
         mf_mcp_x = hand_landmarks[i2].x;
+        mf_mcp_z = hand_landmarks[i2].z;
+        
         wrist_x = hand_landmarks[0].x;
         wrist_y = hand_landmarks[0].y;
+        wrist_z = hand_landmarks[0].z;
 
         d_mt_mm = Math.sqrt(
-          (mf_tip_x - mf_mcp_x) ** 2 + (mf_tip_y - mf_mcp_y) ** 2
+          (mf_tip_x - mf_mcp_x) ** 2 + (mf_tip_y - mf_mcp_y) ** 2 + (mf_tip_z - mf_mcp_z) ** 2
         );
         d_mm_wr = Math.sqrt(
-          (mf_mcp_x - wrist_x) ** 2 + (mf_mcp_y - wrist_y) ** 2
+          (mf_mcp_x - wrist_x) ** 2 + (mf_mcp_y - wrist_y) ** 2 + (mf_mcp_z - wrist_z) ** 2
         );
-        console.log(mf_tip_x, mf_tip_y);
-        return d_mt_mm / d_mm_wr < 1;
+        //console.log(mf_tip_x, mf_tip_y, mf_tip_z);
+        return d_mt_mm / d_mm_wr < 0.6;
       }
 
       // This "onResults" function takes the hand detection results
@@ -89,8 +94,8 @@
 
         // Cover the screen with a semi-transparent black rectangle
         // (to make the camera image very dark)
-        ctx.fillStyle = "#000c";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        //ctx.fillStyle = "#000c";
+        //ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         // If there are any hands, draw them
         if (results.multiHandLandmarks) {
@@ -109,15 +114,18 @@
               pFingerIsClosed;
 
             if (isFlip) {
-              ctx.fillStyle = "#FFFF";
-              ctx.fillRect(
-                (hand_landmarks[12].x * canvas.width) | 0,
-                (hand_landmarks[12].y * canvas.height) | 0,
-                50,
-                50
-              );
-            }
+              ctx.beginPath();
+              ctx.arc(hand_landmarks[10].x * canvas.width, hand_landmarks[10].y * canvas.height, 
+              Math.sqrt(
+                (hand_landmarks[12].x * canvas.width - hand_landmarks[10].x * canvas.width) ** 2 + (hand_landmarks[12].y * canvas.height - hand_landmarks[10].y * canvas.height) ** 2
+              ) + 20, 
+              0, 2 * Math.PI);
+              ctx.fillStyle = "#FFFFFF";
+              ctx.fill();
+              ctx.stroke();
 
+            }
+            /*
             drawConnectors(ctx, hand_landmarks, HAND_CONNECTIONS, {
               color: "white",
               lineWidth: 12,
@@ -127,7 +135,9 @@
             drawLandmarks(ctx, hand_landmarks, {
               color: "white",
               lineWidth: 8,
-            });
+            }
+            );
+            */
           }
         }
       }
